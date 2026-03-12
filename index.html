@@ -1,31 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FC Entrance</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon.png">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <style>
-    :root { --bg-default: #f8f9fa; --bg-roadmap: #f1f8e9; --num-bg: #81c784; }
+    /* 今まで一緒に調整してきた「元のサイズ感」を維持 */
+    :root { 
+      --bg-default: #f8f9fa; 
+      --bg-roadmap: #f1f8e9; 
+      --bg-help: #e3f2fd;    /* ブルー系 */
+      --bg-apply: #fffde7;   /* イエロー系 */
+      --bg-video: #ffebee;   /* レッド系 */
+      --num-bg: #81c784; 
+    }
     body { font-family: -apple-system, sans-serif; text-align: center; background: var(--bg-default); padding: 20px 10px; margin:0; }
+    
+    /* 背景色ハイライト（あなたが指定したカテゴリ別） */
+    .bg-help { background-color: var(--bg-help) !important; }
+    .bg-video { background-color: var(--bg-video) !important; }
     .bg-roadmap { background-color: var(--bg-roadmap) !important; background-image: radial-gradient(#dcedc8 2px, transparent 2px) !important; background-size: 25px 25px !important; }
+    .bg-apply { 
+      background-color: var(--bg-apply) !important;
+      background-image: linear-gradient(#e0e0e0 1px, transparent 1px) !important; /* ノートの線 */
+      background-size: 100% 30px !important;
+    }
+
     .header { width: 100%; text-align: center; padding: 15px 0; font-weight: bold; font-size: 22px; color: #333; }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 10px; width: 100%; max-width: 450px; margin: 0 auto; align-items: start; }
+    
     .item { display: flex; flex-direction: column; align-items: center; }
     .clickable { cursor: pointer; }
     .clickable:active { transform: scale(0.92); }
+
     .icon-box { 
       width: 80%; aspect-ratio: 1/1; background-color: #fff; 
       background-size: cover; background-position: center; background-repeat: no-repeat;
       border-radius: 22%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 8px;
       display: flex; align-items: center; justify-content: center;
     }
-    .deco-mode { background-color: transparent !important; box-shadow: none !important; border-radius: 0 !important; background-size: contain; animation: sway 2.5s infinite ease-in-out; }
-    .num-style { background-color: var(--num-bg) !important; color: white !important; font-size: 24px; font-weight: 900; border-radius: 50% !important; }
+    
+    /* ヒロミさんの揺れ（一緒に作ったアニメーション） */
+    .deco-mode {
+      background-color: transparent !important; box-shadow: none !important; border-radius: 0 !important;
+      background-size: contain; animation: sway 2.5s infinite ease-in-out;
+    }
     @keyframes sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+    .num-style { background-color: var(--num-bg) !important; color: white !important; font-size: 24px; font-weight: 900; border-radius: 50% !important; }
     .name { font-size: 11px; font-weight: bold; line-height: 1.3; width: 95%; word-break: break-all; min-height: 2.6em; display: flex; align-items: flex-start; justify-content: center; }
-    .modal-body a { color: #0984e3; text-decoration: underline; font-weight: bold; }
+
     #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
     #modal-content { background: white; width: 85%; max-width: 320px; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .modal-body { font-size: 15px; line-height: 1.6; white-space: pre-wrap; margin-bottom: 20px; text-align: left; }
@@ -35,8 +58,8 @@
   </style>
 </head>
 <body id="bodyTag">
-  <h3 id="main-title" class="header">読み込み中...</h3>
-  <div id="loading" style="padding:50px; color:#888;">データを取得しています...</div>
+  <h3 id="main-title" class="header"></h3>
+  <div id="loading" style="padding:50px; color:#888;">読み込み中...</div>
   <div id="app" class="grid"></div>
 
   <div id="modal-overlay" onclick="closeModal()">
@@ -48,24 +71,22 @@
   </div>
 
   <script>
-    // --- 設定部分 ---
-    const gasUrl = "https://script.google.com/macros/s/AKfycbyXtX5OAweEnYx0W4URXRL1-q24M0zDebGvGwzipT25gUOSQZ7zGpgRXkycXWbSYmkOqg/exec"; 
-    // ----------------
-
     const urlParams = new URLSearchParams(window.location.search);
     const currentPage = urlParams.get('p') || "ホーム";
+    // 本番環境のGASウェブアプリURLをここに入れてください
+    const gasApiUrl = "https://script.google.com/macros/s/あなたのGASデプロイID/exec";
     
-    // 現在のURL（ entrance.html 部分まで）をベースにする
-    const baseUrl = window.location.origin + window.location.pathname;
-    
-    const isRoadmap = currentPage.includes('ロードマップ');
-    
+    const body = document.getElementById('bodyTag');
+    if (currentPage.includes('ヘルプデスク')) { body.classList.add('bg-help'); }
+    else if (currentPage.includes('申請')) { body.classList.add('bg-apply'); }
+    else if (currentPage.includes('動画')) { body.classList.add('bg-video'); }
+    else if (currentPage.includes('ロードマップ')) { body.classList.add('bg-roadmap'); }
+
     document.getElementById('main-title').innerText = (currentPage === "ホーム") ? "FC Entrance" : currentPage;
-    if (isRoadmap) document.getElementById('bodyTag').classList.add('bg-roadmap');
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-    // データの取得
-    fetch(`${gasUrl}?p=${encodeURIComponent(currentPage)}`)
+    // GASからデータを取得
+    fetch(`${gasApiUrl}?p=${encodeURIComponent(currentPage)}`)
       .then(response => response.json())
       .then(data => {
         document.getElementById('loading').style.display = 'none';
@@ -82,7 +103,7 @@
             icon.innerText = item.rawName;
           } else if (item.hasImg) {
             icon.style.backgroundImage = "url('" + item.img + "')";
-            if (item.isDeco) icon.classList.add('deco-mode');
+            if (item.isDeco) { icon.classList.add('deco-mode'); }
           }
 
           if (!item.isDeco) {
@@ -95,9 +116,10 @@
                 callBtn.style.display = 'block';
                 callBtn.onclick = () => { window.location.href = content; };
                 document.getElementById('modal-overlay').style.display = 'flex';
-              } else if (content.startsWith('http') && !content.includes('<a')) {
+              } else if (content.startsWith('http')) {
                 window.open(content, '_blank');
               } else if (content !== "") {
+                // 自動リンク化
                 let linkedText = content;
                 const urlRegex = /(?<!href="|">)(https?:\/\/[^\s<]+)/g;
                 linkedText = linkedText.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
@@ -105,11 +127,9 @@
                 document.getElementById('modal-call-btn').style.display = 'none';
                 document.getElementById('modal-overlay').style.display = 'flex';
               } else {
-                // 次のページへの遷移（ entrance.html?p=次ページ名 ）
-                window.location.href = baseUrl + "?p=" + encodeURIComponent(item.rawName);
+                window.location.href = `?p=${encodeURIComponent(item.rawName)}`;
               }
             };
-            
             const nameDiv = document.createElement('div');
             nameDiv.className = 'name';
             nameDiv.innerHTML = item.name;
@@ -122,23 +142,12 @@
         });
 
         if (currentPage !== "ホーム") {
-          const b = document.createElement('a');
+          const b = document.createElement('button');
           b.className = 'btn-back'; b.innerText = "戻る";
-          b.onclick = () => { window.location.href = baseUrl; };
+          b.onclick = () => { window.location.href = window.location.pathname; };
           document.body.appendChild(b);
         }
-      })
-      .catch(error => {
-        document.getElementById('loading').innerText = "データの取得に失敗しました。";
-        console.error('Error:', error);
       });
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
